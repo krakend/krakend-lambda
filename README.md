@@ -46,7 +46,7 @@ aws  --endpoint-url=http://$(docker-machine ip localstack):4574 --no-verify-ssl 
     lambda invoke \
         --function-name python37 \
         --invocation-type "RequestResponse" \
-        --payload '{"name":"fooo"}' \
+        --payload '{"first_name":"foo","last_name":"bar"}' \
         response.txt
 ```
 

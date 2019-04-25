@@ -46,7 +46,7 @@ func BackendFactoryWithInvoker(bf proxy.BackendFactory, i Invoker) proxy.Backend
 			}
 			input := &lambda.InvokeInput{
 				ClientContext:  aws.String("MyApp"),
-				FunctionName:   aws.String(r.Params[ecfg.FunctionParamName]),
+				FunctionName:   aws.String(ecfg.FunctionExtractor(r)),
 				InvocationType: aws.String("RequestResponse"),
 				LogType:        aws.String("Tail"),
 				Payload:        payload,
@@ -93,13 +93,24 @@ func getOptions(remote *config.Backend) (*options, error) {
 		return nil, errBadConfig
 	}
 
-	funcParamName, ok := ecfg["function_param_name"].(string)
-	if !ok {
-		funcParamName = "function"
+	var funcExtractor functionExtractor
+	funcName, ok := ecfg["function_name"].(string)
+	if ok {
+		funcExtractor = func(_ *proxy.Request) string {
+			return funcName
+		}
+	} else {
+		funcParamName, ok := ecfg["function_param_name"].(string)
+		if !ok {
+			funcParamName = "function"
+		}
+		funcExtractor = func(r *proxy.Request) string {
+			return r.Params[funcParamName]
+		}
 	}
 
 	cfg := &options{
-		FunctionParamName: funcParamName,
+		FunctionExtractor: funcExtractor,
 	}
 	if remote.Method == "GET" {
 		cfg.PayloadExtractor = fromParams
@@ -111,8 +122,10 @@ func getOptions(remote *config.Backend) (*options, error) {
 
 type options struct {
 	PayloadExtractor  payloadExtractor
-	FunctionParamName string
+	FunctionExtractor functionExtractor
 }
+
+type functionExtractor func(*proxy.Request) string
 
 type payloadExtractor func(*proxy.Request) ([]byte, error)
 
