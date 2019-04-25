@@ -1,0 +1,10 @@
+github.com/aws/aws-lambda-go v1.10.0 h1:uafgdfYGQD0UeT7d2uKdyWW8j/ZYRifRPIdmeqLzLCk=
+github.com/aws/aws-lambda-go v1.10.0/go.mod h1:zUsUQhAUjYzR8AuduJPCfhBuKWUaDbQiPOG+ouzmE1A=
+github.com/aws/aws-sdk-go v1.19.16 h1:tC+QDBu3TxgRNuq+/rBBlK3QGLcBDn8hR5L/Wig67Mk=
+github.com/aws/aws-sdk-go v1.19.16/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
+github.com/devopsfaith/flatmap v0.0.0-20190327225844-8d71d61e07ac h1:blZXXPXthOwNqFKXULhRzPtn98SCi+r9AdqO7Pcfasw=
+github.com/devopsfaith/flatmap v0.0.0-20190327225844-8d71d61e07ac/go.mod h1:J9Y/58s7wx7HbHT3i4UKNwLGuBB9qCf0/JUdEFGDPmA=
+github.com/devopsfaith/krakend v0.0.0-20190423184219-2c63402f9b52 h1:i1oc53xCmvl4tXDjmie/Zns5xj3NvuS7222zYH+ACAM=
+github.com/devopsfaith/krakend v0.0.0-20190423184219-2c63402f9b52/go.mod h1:yxQ154W+9WspAsoGcnsttb30YJHuSbDZivUdLH09PiA=
+github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af h1:pmfjZENx5imkbgOkpRUYLnmbU7UEFbjtDA2hxJ1ichM=
+github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=
