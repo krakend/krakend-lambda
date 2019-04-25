@@ -23,34 +23,32 @@ func TestBackendFactoryWithInvoker(t *testing.T) {
 
 	bf := BackendFactoryWithInvoker(
 		explosiveBF,
-		invoker{
-			f: func(in *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
-				if *in.InvocationType != "RequestResponse" {
-					t.Errorf("unexpected InvocationType: %s", *in.InvocationType)
-				}
-				if *in.ClientContext != "KrakenD" {
-					t.Errorf("unexpected ClientContext: %s", *in.ClientContext)
-				}
-				if *in.FunctionName != "python37" {
-					t.Errorf("unexpected FunctionName: %s", *in.FunctionName)
-				}
-				payload := map[string]string{}
-				if err := json.Unmarshal(in.Payload, &payload); err != nil {
-					t.Error(err)
-					return nil, err
-				}
-				if payload["first_name"] == "" {
-					t.Errorf("first_name not present in the payload request")
-				}
-				if payload["last_name"] == "" {
-					t.Errorf("last_name not present in the payload request")
-				}
-				return &lambda.InvokeOutput{
-					Payload:    []byte(fmt.Sprintf(`{"message":"Hello %s %s!"}`, payload["first_name"], payload["last_name"])),
-					StatusCode: aws.Int64(200),
-				}, nil
-			},
-		},
+		invoker(func(in *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
+			if *in.InvocationType != "RequestResponse" {
+				t.Errorf("unexpected InvocationType: %s", *in.InvocationType)
+			}
+			if *in.ClientContext != "KrakenD" {
+				t.Errorf("unexpected ClientContext: %s", *in.ClientContext)
+			}
+			if *in.FunctionName != "python37" {
+				t.Errorf("unexpected FunctionName: %s", *in.FunctionName)
+			}
+			payload := map[string]string{}
+			if err := json.Unmarshal(in.Payload, &payload); err != nil {
+				t.Error(err)
+				return nil, err
+			}
+			if payload["first_name"] == "" {
+				t.Errorf("first_name not present in the payload request")
+			}
+			if payload["last_name"] == "" {
+				t.Errorf("last_name not present in the payload request")
+			}
+			return &lambda.InvokeOutput{
+				Payload:    []byte(fmt.Sprintf(`{"message":"Hello %s %s!"}`, payload["first_name"], payload["last_name"])),
+				StatusCode: aws.Int64(200),
+			}, nil
+		}),
 	)
 
 	for i, tc := range []struct {
@@ -156,10 +154,6 @@ func TestBackendFactoryWithInvoker(t *testing.T) {
 	}
 }
 
-type invoker struct {
-	f func(*lambda.InvokeInput) (*lambda.InvokeOutput, error)
-}
+type invoker func(*lambda.InvokeInput) (*lambda.InvokeOutput, error)
 
-func (i invoker) Invoke(in *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
-	return i.f(in)
-}
+func (i invoker) Invoke(in *lambda.InvokeInput) (*lambda.InvokeOutput, error) { return i(in) }
