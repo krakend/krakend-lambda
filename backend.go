@@ -45,7 +45,7 @@ func BackendFactoryWithInvoker(bf proxy.BackendFactory, i Invoker) proxy.Backend
 				return nil, err
 			}
 			input := &lambda.InvokeInput{
-				ClientContext:  aws.String("MyApp"),
+				ClientContext:  aws.String("KrakenD"),
 				FunctionName:   aws.String(ecfg.FunctionExtractor(r)),
 				InvocationType: aws.String("RequestResponse"),
 				LogType:        aws.String("Tail"),
