@@ -29,15 +29,24 @@ type Invoker interface {
 }
 
 func BackendFactory(bf proxy.BackendFactory) proxy.BackendFactory {
-	return BackendFactoryWithInvoker(bf, lambda.New(session.New()))
+	return BackendFactoryWithInvoker(bf, invokerFactory)
 }
 
-func BackendFactoryWithInvoker(bf proxy.BackendFactory, i Invoker) proxy.BackendFactory {
+func invokerFactory(o *Options) Invoker {
+	if o.Config == nil {
+		return lambda.New(session.New())
+	}
+	return lambda.New(session.Must(session.NewSession(o.Config)))
+}
+
+func BackendFactoryWithInvoker(bf proxy.BackendFactory, invokerFactory func(*Options) Invoker) proxy.BackendFactory {
 	return func(remote *config.Backend) proxy.Proxy {
 		ecfg, err := getOptions(remote)
 		if err != nil {
 			return bf(remote)
 		}
+
+		i := invokerFactory(ecfg)
 
 		return func(ctx context.Context, r *proxy.Request) (*proxy.Response, error) {
 			payload, err := ecfg.PayloadExtractor(r)
@@ -83,7 +92,7 @@ func BackendFactoryWithInvoker(bf proxy.BackendFactory, i Invoker) proxy.Backend
 	}
 }
 
-func getOptions(remote *config.Backend) (*options, error) {
+func getOptions(remote *config.Backend) (*Options, error) {
 	v, ok := remote.ExtraConfig[Namespace]
 	if !ok {
 		return nil, errNoConfig
@@ -109,7 +118,7 @@ func getOptions(remote *config.Backend) (*options, error) {
 		}
 	}
 
-	cfg := &options{
+	cfg := &Options{
 		FunctionExtractor: funcExtractor,
 	}
 	if remote.Method == "GET" {
@@ -117,12 +126,31 @@ func getOptions(remote *config.Backend) (*options, error) {
 	} else {
 		cfg.PayloadExtractor = fromBody
 	}
+
+	region, ok := ecfg["region"].(string)
+	if !ok {
+		return cfg, nil
+	}
+
+	cfg.Config = &aws.Config{
+		Region: aws.String(region),
+	}
+
+	if endpoint, ok := ecfg["endpoint"].(string); ok {
+		cfg.Config.WithEndpoint(endpoint)
+	}
+
+	if retries, ok := ecfg["max_retries"].(int); ok {
+		cfg.Config.WithMaxRetries(retries)
+	}
+
 	return cfg, nil
 }
 
-type options struct {
+type Options struct {
 	PayloadExtractor  payloadExtractor
 	FunctionExtractor functionExtractor
+	Config            *aws.Config
 }
 
 type functionExtractor func(*proxy.Request) string

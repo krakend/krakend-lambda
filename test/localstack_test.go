@@ -3,30 +3,25 @@ package test
 import (
 	"bytes"
 	"context"
+	"flag"
 	"io"
 	"io/ioutil"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/lambda"
 	krakendlambda "github.com/devopsfaith/krakend-lambda"
 	"github.com/devopsfaith/krakend/config"
 	"github.com/devopsfaith/krakend/proxy"
 )
 
-func TestLocalStack(t *testing.T) {
-	sess := session.Must(session.NewSession(&aws.Config{
-		Region:   aws.String("us-east-1"),
-		Endpoint: aws.String("http://192.168.99.100:4574"),
-	}))
+var endpoint = flag.String("aws_endpoint", "http://192.168.99.100:4574", "url of the localstack's endpoint")
 
+func TestLocalStack(t *testing.T) {
 	explosiveBF := func(remote *config.Backend) proxy.Proxy {
 		t.Error("this backend factory should not been called")
 		return proxy.NoopProxy
 	}
 
-	bf := krakendlambda.BackendFactoryWithInvoker(explosiveBF, lambda.New(sess))
+	bf := krakendlambda.BackendFactory(explosiveBF)
 
 	for i, tc := range []struct {
 		Name        string
@@ -103,7 +98,10 @@ func TestLocalStack(t *testing.T) {
 				Params: tc.Params,
 				Body:   tc.Body,
 			}
-			extra := map[string]interface{}{}
+			extra := map[string]interface{}{
+				"region":   "us-east-1",
+				"endpoint": *endpoint,
+			}
 			remote := &config.Backend{
 				Method: tc.Method,
 				ExtraConfig: config.ExtraConfig{
@@ -120,9 +118,11 @@ func TestLocalStack(t *testing.T) {
 			resp, err := bf(remote)(context.Background(), r)
 			if err != nil {
 				t.Error(i, err)
+				return
 			}
 			if !resp.IsComplete {
 				t.Errorf("%d: incomplete response", i)
+				return
 			}
 			if m, ok := resp.Data["message"]; !ok || m != tc.ExpectedMsg {
 				t.Errorf("unexpected response: %v", resp.Data)

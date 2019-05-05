@@ -44,10 +44,12 @@ func TestBackendFactoryWithInvoker_fallback(t *testing.T) {
 					hits++
 					return proxy.NoopProxy
 				},
-				invoker(func(in *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
-					t.Error("this invoker should not been called")
-					return nil, nil
-				}),
+				func(_ *Options) Invoker {
+					return invoker(func(in *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
+						t.Error("this invoker should not been called")
+						return nil, nil
+					})
+				},
 			)
 
 			resp, err := bf(tc.Cfg)(context.Background(), &proxy.Request{})
@@ -72,32 +74,34 @@ func TestBackendFactoryWithInvoker(t *testing.T) {
 
 	bf := BackendFactoryWithInvoker(
 		explosiveBF,
-		invoker(func(in *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
-			if *in.InvocationType != "RequestResponse" {
-				t.Errorf("unexpected InvocationType: %s", *in.InvocationType)
-			}
-			if *in.ClientContext != "KrakenD" {
-				t.Errorf("unexpected ClientContext: %s", *in.ClientContext)
-			}
-			if *in.FunctionName != "python37" {
-				t.Errorf("unexpected FunctionName: %s", *in.FunctionName)
-			}
-			payload := map[string]string{}
-			if err := json.Unmarshal(in.Payload, &payload); err != nil {
-				t.Error(err)
-				return nil, err
-			}
-			if payload["first_name"] == "" {
-				t.Errorf("first_name not present in the payload request")
-			}
-			if payload["last_name"] == "" {
-				t.Errorf("last_name not present in the payload request")
-			}
-			return &lambda.InvokeOutput{
-				Payload:    []byte(fmt.Sprintf(`{"message":"Hello %s %s!"}`, payload["first_name"], payload["last_name"])),
-				StatusCode: aws.Int64(200),
-			}, nil
-		}),
+		func(_ *Options) Invoker {
+			return invoker(func(in *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
+				if *in.InvocationType != "RequestResponse" {
+					t.Errorf("unexpected InvocationType: %s", *in.InvocationType)
+				}
+				if *in.ClientContext != "KrakenD" {
+					t.Errorf("unexpected ClientContext: %s", *in.ClientContext)
+				}
+				if *in.FunctionName != "python37" {
+					t.Errorf("unexpected FunctionName: %s", *in.FunctionName)
+				}
+				payload := map[string]string{}
+				if err := json.Unmarshal(in.Payload, &payload); err != nil {
+					t.Error(err)
+					return nil, err
+				}
+				if payload["first_name"] == "" {
+					t.Errorf("first_name not present in the payload request")
+				}
+				if payload["last_name"] == "" {
+					t.Errorf("last_name not present in the payload request")
+				}
+				return &lambda.InvokeOutput{
+					Payload:    []byte(fmt.Sprintf(`{"message":"Hello %s %s!"}`, payload["first_name"], payload["last_name"])),
+					StatusCode: aws.Int64(200),
+				}, nil
+			})
+		},
 	)
 
 	for i, tc := range []struct {
@@ -211,31 +215,33 @@ func TestBackendFactoryWithInvoker_error(t *testing.T) {
 
 	bf := BackendFactoryWithInvoker(
 		explosiveBF,
-		invoker(func(in *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
-			if *in.InvocationType != "RequestResponse" {
-				t.Errorf("unexpected InvocationType: %s", *in.InvocationType)
-			}
-			if *in.ClientContext != "KrakenD" {
-				t.Errorf("unexpected ClientContext: %s", *in.ClientContext)
-			}
-			if *in.FunctionName != "python37" {
-				t.Errorf("unexpected FunctionName: %s", *in.FunctionName)
-			}
-			payload := map[string]string{}
-			if err := json.Unmarshal(in.Payload, &payload); err != nil {
-				return nil, err
-			}
-			if payload["first_name"] != "" {
-				t.Errorf("first_name present in the payload request")
-			}
-			if payload["last_name"] != "" {
-				t.Errorf("last_name present in the payload request")
-			}
-			return &lambda.InvokeOutput{
-				Payload:    []byte(`{"message":"Hello  !"}`),
-				StatusCode: aws.Int64(200),
-			}, nil
-		}),
+		func(_ *Options) Invoker {
+			return invoker(func(in *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
+				if *in.InvocationType != "RequestResponse" {
+					t.Errorf("unexpected InvocationType: %s", *in.InvocationType)
+				}
+				if *in.ClientContext != "KrakenD" {
+					t.Errorf("unexpected ClientContext: %s", *in.ClientContext)
+				}
+				if *in.FunctionName != "python37" {
+					t.Errorf("unexpected FunctionName: %s", *in.FunctionName)
+				}
+				payload := map[string]string{}
+				if err := json.Unmarshal(in.Payload, &payload); err != nil {
+					return nil, err
+				}
+				if payload["first_name"] != "" {
+					t.Errorf("first_name present in the payload request")
+				}
+				if payload["last_name"] != "" {
+					t.Errorf("last_name present in the payload request")
+				}
+				return &lambda.InvokeOutput{
+					Payload:    []byte(`{"message":"Hello  !"}`),
+					StatusCode: aws.Int64(200),
+				}, nil
+			})
+		},
 	)
 
 	r := &proxy.Request{
@@ -267,32 +273,34 @@ func TestBackendFactoryWithInvoker_incomplete(t *testing.T) {
 
 	bf := BackendFactoryWithInvoker(
 		explosiveBF,
-		invoker(func(in *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
-			if *in.InvocationType != "RequestResponse" {
-				t.Errorf("unexpected InvocationType: %s", *in.InvocationType)
-			}
-			if *in.ClientContext != "KrakenD" {
-				t.Errorf("unexpected ClientContext: %s", *in.ClientContext)
-			}
-			if *in.FunctionName != "" {
-				t.Errorf("unexpected FunctionName: %s", *in.FunctionName)
-			}
-			payload := map[string]string{}
-			if err := json.Unmarshal(in.Payload, &payload); err != nil {
-				t.Error(err)
-				return nil, err
-			}
-			if payload["first_name"] != "" {
-				t.Errorf("first_name present in the payload request")
-			}
-			if payload["last_name"] != "" {
-				t.Errorf("last_name present in the payload request")
-			}
-			return &lambda.InvokeOutput{
-				Payload:    []byte(`{"message":"Hello  !"}`),
-				StatusCode: aws.Int64(200),
-			}, nil
-		}),
+		func(_ *Options) Invoker {
+			return invoker(func(in *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
+				if *in.InvocationType != "RequestResponse" {
+					t.Errorf("unexpected InvocationType: %s", *in.InvocationType)
+				}
+				if *in.ClientContext != "KrakenD" {
+					t.Errorf("unexpected ClientContext: %s", *in.ClientContext)
+				}
+				if *in.FunctionName != "" {
+					t.Errorf("unexpected FunctionName: %s", *in.FunctionName)
+				}
+				payload := map[string]string{}
+				if err := json.Unmarshal(in.Payload, &payload); err != nil {
+					t.Error(err)
+					return nil, err
+				}
+				if payload["first_name"] != "" {
+					t.Errorf("first_name present in the payload request")
+				}
+				if payload["last_name"] != "" {
+					t.Errorf("last_name present in the payload request")
+				}
+				return &lambda.InvokeOutput{
+					Payload:    []byte(`{"message":"Hello  !"}`),
+					StatusCode: aws.Int64(200),
+				}, nil
+			})
+		},
 	)
 
 	remote := &config.Backend{
@@ -328,12 +336,14 @@ func TestBackendFactoryWithInvoker_wrongStatusCode(t *testing.T) {
 
 	bf := BackendFactoryWithInvoker(
 		explosiveBF,
-		invoker(func(in *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
-			return &lambda.InvokeOutput{
-				Payload:    []byte(``),
-				StatusCode: aws.Int64(404),
-			}, nil
-		}),
+		func(_ *Options) Invoker {
+			return invoker(func(in *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
+				return &lambda.InvokeOutput{
+					Payload:    []byte(``),
+					StatusCode: aws.Int64(404),
+				}, nil
+			})
+		},
 	)
 
 	remote := &config.Backend{
