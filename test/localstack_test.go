@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"testing"
+	"time"
 
 	krakendlambda "github.com/devopsfaith/krakend-lambda"
 	"github.com/devopsfaith/krakend/config"
@@ -115,7 +116,11 @@ func TestLocalStack(t *testing.T) {
 				extra["function_name"] = tc.Function
 			}
 			remote.ExtraConfig[krakendlambda.Namespace] = extra
-			resp, err := bf(remote)(context.Background(), r)
+
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+
+			resp, err := bf(remote)(ctx, r)
 			if err != nil {
 				t.Error(i, err)
 				return

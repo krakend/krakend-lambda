@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/devopsfaith/krakend/config"
 	"github.com/devopsfaith/krakend/proxy"
@@ -365,4 +366,6 @@ func TestBackendFactoryWithInvoker_wrongStatusCode(t *testing.T) {
 
 type invoker func(*lambda.InvokeInput) (*lambda.InvokeOutput, error)
 
-func (i invoker) Invoke(in *lambda.InvokeInput) (*lambda.InvokeOutput, error) { return i(in) }
+func (i invoker) InvokeWithContext(_ aws.Context, in *lambda.InvokeInput, _ ...request.Option) (*lambda.InvokeOutput, error) {
+	return i(in)
+}

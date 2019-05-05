@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/devopsfaith/krakend/config"
@@ -26,7 +27,7 @@ var (
 )
 
 type Invoker interface {
-	Invoke(*lambda.InvokeInput) (*lambda.InvokeOutput, error)
+	InvokeWithContext(aws.Context, *lambda.InvokeInput, ...request.Option) (*lambda.InvokeOutput, error)
 }
 
 func BackendFactory(bf proxy.BackendFactory) proxy.BackendFactory {
@@ -63,7 +64,7 @@ func BackendFactoryWithInvoker(bf proxy.BackendFactory, invokerFactory func(*Opt
 				// Qualifier:      aws.String("1"),
 			}
 
-			result, err := i.Invoke(input)
+			result, err := i.InvokeWithContext(ctx, input)
 			if err != nil {
 				return nil, err
 			}
