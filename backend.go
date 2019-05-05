@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -159,7 +160,11 @@ type payloadExtractor func(*proxy.Request) ([]byte, error)
 
 func fromParams(r *proxy.Request) ([]byte, error) {
 	buf := new(bytes.Buffer)
-	err := json.NewEncoder(buf).Encode(r.Params)
+	params := map[string]string{}
+	for k, v := range r.Params {
+		params[strings.ToLower(k)] = v
+	}
+	err := json.NewEncoder(buf).Encode(params)
 	return buf.Bytes(), err
 }
 
