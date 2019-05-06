@@ -54,5 +54,5 @@ test the backend
 
 ```
 cd test
-go test
+go test -tags integration -aws_endpoint=http://192.168.99.100:4574"
 ```
