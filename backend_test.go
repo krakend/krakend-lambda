@@ -80,7 +80,7 @@ func TestBackendFactoryWithInvoker(t *testing.T) {
 				if *in.InvocationType != "RequestResponse" {
 					t.Errorf("unexpected InvocationType: %s", *in.InvocationType)
 				}
-				if *in.ClientContext != "KrakenD" {
+				if *in.ClientContext != "S3Jha2VuRA==" {
 					t.Errorf("unexpected ClientContext: %s", *in.ClientContext)
 				}
 				if *in.FunctionName != "python37" {
@@ -221,7 +221,7 @@ func TestBackendFactoryWithInvoker_error(t *testing.T) {
 				if *in.InvocationType != "RequestResponse" {
 					t.Errorf("unexpected InvocationType: %s", *in.InvocationType)
 				}
-				if *in.ClientContext != "KrakenD" {
+				if *in.ClientContext != "S3Jha2VuRA==" {
 					t.Errorf("unexpected ClientContext: %s", *in.ClientContext)
 				}
 				if *in.FunctionName != "python37" {
@@ -279,7 +279,7 @@ func TestBackendFactoryWithInvoker_incomplete(t *testing.T) {
 				if *in.InvocationType != "RequestResponse" {
 					t.Errorf("unexpected InvocationType: %s", *in.InvocationType)
 				}
-				if *in.ClientContext != "KrakenD" {
+				if *in.ClientContext != "S3Jha2VuRA==" {
 					t.Errorf("unexpected ClientContext: %s", *in.ClientContext)
 				}
 				if *in.FunctionName != "" {
