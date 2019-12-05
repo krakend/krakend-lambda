@@ -98,7 +98,7 @@ func TestBackendFactoryWithInvoker(t *testing.T) {
 					t.Errorf("last_name not present in the payload request")
 				}
 				return &lambda.InvokeOutput{
-					Payload:    []byte(fmt.Sprintf(`{"message":"Hello %s %s!"}`, payload["first_name"], payload["last_name"])),
+					Payload:    []byte(fmt.Sprintf(`{"message":"Hello %s %s!", "foo": 42}`, payload["first_name"], payload["last_name"])),
 					StatusCode: aws.Int64(200),
 				}, nil
 			})
@@ -182,7 +182,8 @@ func TestBackendFactoryWithInvoker(t *testing.T) {
 			}
 			extra := map[string]interface{}{}
 			remote := &config.Backend{
-				Method: tc.Method,
+				Method:    tc.Method,
+				Blacklist: []string{"foo"},
 				ExtraConfig: config.ExtraConfig{
 					Namespace: extra,
 				},
@@ -202,6 +203,9 @@ func TestBackendFactoryWithInvoker(t *testing.T) {
 				t.Errorf("%d: incomplete response", i)
 			}
 			if m, ok := resp.Data["message"]; !ok || m != tc.ExpectedMsg {
+				t.Errorf("unexpected response: %v", resp.Data)
+			}
+			if _, ok := resp.Data["foo"]; ok {
 				t.Errorf("unexpected response: %v", resp.Data)
 			}
 		})
