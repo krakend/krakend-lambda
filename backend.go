@@ -50,6 +50,8 @@ func BackendFactoryWithInvoker(bf proxy.BackendFactory, invokerFactory func(*Opt
 
 		i := invokerFactory(ecfg)
 
+		ef := proxy.NewEntityFormatter(remote)
+
 		return func(ctx context.Context, r *proxy.Request) (*proxy.Response, error) {
 			payload, err := ecfg.PayloadExtractor(r)
 			if err != nil {
@@ -76,20 +78,20 @@ func BackendFactoryWithInvoker(bf proxy.BackendFactory, invokerFactory func(*Opt
 			if err := json.Unmarshal(result.Payload, &data); err != nil {
 				return nil, err
 			}
-			response := &proxy.Response{
+			response := ef.Format(proxy.Response{
 				Metadata: proxy.Metadata{
 					StatusCode: int(*result.StatusCode),
 					Headers:    map[string][]string{},
 				},
 				Data:       data,
 				IsComplete: true,
-			}
+			})
 
 			if result.ExecutedVersion != nil {
 				response.Metadata.Headers["X-Amz-Executed-Version"] = []string{*result.ExecutedVersion}
 			}
 
-			return response, nil
+			return &response, nil
 		}
 	}
 }
