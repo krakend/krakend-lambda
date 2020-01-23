@@ -3,6 +3,7 @@ package lambda
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -13,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/devopsfaith/krakend/config"
+	"github.com/devopsfaith/krakend/core"
 	"github.com/devopsfaith/krakend/proxy"
 )
 
@@ -24,6 +26,7 @@ var (
 	errBadStatusCode = errors.New("aws lambda: bad status code")
 	errNoConfig      = errors.New("aws lambda: no extra config defined")
 	errBadConfig     = errors.New("aws lambda: unable to parse the defined extra config")
+	clientContext    = base64.StdEncoding.EncodeToString([]byte(`{"client":"KrakenD", "version":"` + core.KrakendVersion + `"}`))
 )
 
 type Invoker interface {
@@ -58,7 +61,7 @@ func BackendFactoryWithInvoker(bf proxy.BackendFactory, invokerFactory func(*Opt
 				return nil, err
 			}
 			input := &lambda.InvokeInput{
-				ClientContext:  aws.String("KrakenD"),
+				ClientContext:  aws.String(clientContext),
 				FunctionName:   aws.String(ecfg.FunctionExtractor(r)),
 				InvocationType: aws.String("RequestResponse"),
 				LogType:        aws.String("Tail"),
