@@ -13,9 +13,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
-	"github.com/luraproject/lura/config"
-	"github.com/luraproject/lura/core"
-	"github.com/luraproject/lura/proxy"
+	"github.com/luraproject/lura/v2/config"
+	"github.com/luraproject/lura/v2/core"
+	"github.com/luraproject/lura/v2/proxy"
 )
 
 const (
