@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/luraproject/lura/v2/config"
+	"github.com/luraproject/lura/v2/logging"
 	"github.com/luraproject/lura/v2/proxy"
 )
 
@@ -41,6 +42,7 @@ func TestBackendFactoryWithInvoker_fallback(t *testing.T) {
 			hits := 0
 
 			bf := BackendFactoryWithInvoker(
+				logging.NoOp,
 				func(remote *config.Backend) proxy.Proxy {
 					hits++
 					return proxy.NoopProxy
@@ -74,6 +76,7 @@ func TestBackendFactoryWithInvoker(t *testing.T) {
 	}
 
 	bf := BackendFactoryWithInvoker(
+		logging.NoOp,
 		explosiveBF,
 		func(_ *Options) Invoker {
 			return invoker(func(in *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
@@ -220,6 +223,7 @@ func TestBackendFactoryWithInvoker_error(t *testing.T) {
 	}
 
 	bf := BackendFactoryWithInvoker(
+		logging.NoOp,
 		explosiveBF,
 		func(_ *Options) Invoker {
 			return invoker(func(in *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
@@ -278,6 +282,7 @@ func TestBackendFactoryWithInvoker_incomplete(t *testing.T) {
 	}
 
 	bf := BackendFactoryWithInvoker(
+		logging.NoOp,
 		explosiveBF,
 		func(_ *Options) Invoker {
 			return invoker(func(in *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
@@ -341,6 +346,7 @@ func TestBackendFactoryWithInvoker_wrongStatusCode(t *testing.T) {
 	}
 
 	bf := BackendFactoryWithInvoker(
+		logging.NoOp,
 		explosiveBF,
 		func(_ *Options) Invoker {
 			return invoker(func(in *lambda.InvokeInput) (*lambda.InvokeOutput, error) {

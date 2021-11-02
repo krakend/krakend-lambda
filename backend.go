@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/luraproject/lura/v2/config"
 	"github.com/luraproject/lura/v2/core"
+	"github.com/luraproject/lura/v2/logging"
 	"github.com/luraproject/lura/v2/proxy"
 )
 
@@ -33,8 +34,8 @@ type Invoker interface {
 	InvokeWithContext(aws.Context, *lambda.InvokeInput, ...request.Option) (*lambda.InvokeOutput, error)
 }
 
-func BackendFactory(bf proxy.BackendFactory) proxy.BackendFactory {
-	return BackendFactoryWithInvoker(bf, invokerFactory)
+func BackendFactory(logger logging.Logger, bf proxy.BackendFactory) proxy.BackendFactory {
+	return BackendFactoryWithInvoker(logger, bf, invokerFactory)
 }
 
 func invokerFactory(o *Options) Invoker {
@@ -44,16 +45,22 @@ func invokerFactory(o *Options) Invoker {
 	return lambda.New(session.Must(session.NewSession(o.Config)))
 }
 
-func BackendFactoryWithInvoker(bf proxy.BackendFactory, invokerFactory func(*Options) Invoker) proxy.BackendFactory {
+func BackendFactoryWithInvoker(logger logging.Logger, bf proxy.BackendFactory, invokerFactory func(*Options) Invoker) proxy.BackendFactory {
 	return func(remote *config.Backend) proxy.Proxy {
+		logPrefix := "[BACKEND: " + remote.URLPattern + "][Lambda]"
 		ecfg, err := getOptions(remote)
 		if err != nil {
+			if err != errNoConfig {
+				logger.Error(logPrefix, err)
+			}
 			return bf(remote)
 		}
 
 		i := invokerFactory(ecfg)
 
 		ef := proxy.NewEntityFormatter(remote)
+
+		logger.Debug(logPrefix, "Component enabled")
 
 		return func(ctx context.Context, r *proxy.Request) (*proxy.Response, error) {
 			payload, err := ecfg.PayloadExtractor(r)
