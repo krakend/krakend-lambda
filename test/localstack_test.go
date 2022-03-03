@@ -1,4 +1,4 @@
-// +build integration
+//go:build integration
 
 package test
 
@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	krakendlambda "github.com/devopsfaith/krakend-lambda"
-	"github.com/devopsfaith/krakend/config"
-	"github.com/devopsfaith/krakend/proxy"
+	krakendlambda "github.com/devopsfaith/krakend-lambda/v2"
+	"github.com/luraproject/lura/v2/config"
+	"github.com/luraproject/lura/v2/proxy"
 )
 
 var endpoint = flag.String("aws_endpoint", "http://192.168.99.100:4574", "url of the localstack's endpoint")
