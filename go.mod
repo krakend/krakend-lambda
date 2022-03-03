@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/aws/aws-sdk-go v1.19.16
-	github.com/luraproject/lura/v2 v2.0.0-dev
+	github.com/luraproject/lura/v2 v2.0.0
 )
 
 require (
