@@ -8,7 +8,8 @@ Set up the localstack container
 
 ```
 docker run --rm --name localstack -it \
-  -p 4567-4583:4567-4583 \
+  -p 4566:4566 \
+  -p 4510-4559:4510-4559 \
   -p 8080:8080 \
   -e HOSTNAME_EXTERNAL=$(docker-machine ip localstack) \
   -e SERVICES=serverless \
@@ -28,7 +29,7 @@ $ cd ./test/lambda1 && zip lambda1.zip handler.py && cd ../../ && mv ./test/lamb
 register your lambda
 
 ```
-$ aws --endpoint-url=http://$(docker-machine ip localstack):4574 --no-verify-ssl \
+$ aws --endpoint-url=http://$(docker-machine ip localstack):4566 --no-verify-ssl \
 	lambda create-function \
 	    --region us-east-1 \
 	    --memory-size 128 \
@@ -42,7 +43,7 @@ $ aws --endpoint-url=http://$(docker-machine ip localstack):4574 --no-verify-ssl
 test it
 
 ```
-aws  --endpoint-url=http://$(docker-machine ip localstack):4574 --no-verify-ssl \
+aws  --endpoint-url=http://$(docker-machine ip localstack):4566 --no-verify-ssl \
     lambda invoke \
         --function-name python37 \
         --invocation-type "RequestResponse" \
@@ -54,5 +55,5 @@ test the backend
 
 ```
 cd test
-go test -tags integration -aws_endpoint=http://192.168.99.100:4574"
+go test -tags integration -aws_endpoint=http://192.168.99.100:4566"
 ```
