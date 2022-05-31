@@ -8,11 +8,13 @@ import (
 	"flag"
 	"io"
 	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 
 	krakendlambda "github.com/devopsfaith/krakend-lambda/v2"
 	"github.com/luraproject/lura/v2/config"
+	"github.com/luraproject/lura/v2/logging"
 	"github.com/luraproject/lura/v2/proxy"
 )
 
@@ -24,7 +26,9 @@ func TestLocalStack(t *testing.T) {
 		return proxy.NoopProxy
 	}
 
-	bf := krakendlambda.BackendFactory(explosiveBF)
+	logger, _ := logging.NewLogger("ERROR", os.Stdout, "")
+
+	bf := krakendlambda.BackendFactory(logger, explosiveBF)
 
 	for i, tc := range []struct {
 		Name        string
