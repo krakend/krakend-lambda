@@ -1,12 +1,16 @@
 version = 1
 
 [[analyzers]]
-name = "shell"
-enabled = true
-
-[[analyzers]]
 name = "go"
 enabled = true
 
   [analyzers.meta]
-  import_root = "github.com/devopsfaith/krakend-ce"
+  import_root = "github.com/krakendio/krakend-ce"
+
+[[transformers]]
+name = "gofmt"
+enabled = true
+
+[[transformers]]
+name = "gofumpt"
+enabled = true
