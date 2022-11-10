@@ -71,7 +71,7 @@ func BackendFactoryWithInvoker(logger logging.Logger, bf proxy.BackendFactory, i
 				// ClientContext:  aws.String(clientContext),
 				FunctionName:   aws.String(ecfg.FunctionExtractor(r)),
 				InvocationType: aws.String("RequestResponse"),
-				LogType:        aws.String("Tail"),
+				LogType:        aws.String("None"),
 				Payload:        payload,
 				// Qualifier:      aws.String("1"),
 			}
