@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -71,7 +71,7 @@ func BackendFactoryWithInvoker(logger logging.Logger, bf proxy.BackendFactory, i
 				// ClientContext:  aws.String(clientContext),
 				FunctionName:   aws.String(ecfg.FunctionExtractor(r)),
 				InvocationType: aws.String("RequestResponse"),
-				LogType:        aws.String("Tail"),
+				LogType:        aws.String("None"),
 				Payload:        payload,
 				// Qualifier:      aws.String("1"),
 			}
@@ -182,5 +182,5 @@ func fromParams(r *proxy.Request) ([]byte, error) {
 }
 
 func fromBody(r *proxy.Request) ([]byte, error) {
-	return ioutil.ReadAll(r.Body)
+	return io.ReadAll(r.Body)
 }

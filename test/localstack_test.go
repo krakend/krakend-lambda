@@ -7,7 +7,6 @@ import (
 	"context"
 	"flag"
 	"io"
-	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -49,7 +48,7 @@ func TestLocalStack(t *testing.T) {
 			Name:        "post_with_default_key",
 			Method:      "POST",
 			Params:      map[string]string{"function": "python37"},
-			Body:        ioutil.NopCloser(bytes.NewBufferString(`{"first_name":"foobar","last_name":"some"}`)),
+			Body:        io.NopCloser(bytes.NewBufferString(`{"first_name":"foobar","last_name":"some"}`)),
 			ExpectedMsg: "Hello foobar some!",
 		},
 		{
@@ -63,7 +62,7 @@ func TestLocalStack(t *testing.T) {
 			Name:        "post_with_custom_key",
 			Method:      "POST",
 			Params:      map[string]string{"function": "unknown", "lambda": "python37"},
-			Body:        ioutil.NopCloser(bytes.NewBufferString(`{"first_name":"foobar","last_name":"some"}`)),
+			Body:        io.NopCloser(bytes.NewBufferString(`{"first_name":"foobar","last_name":"some"}`)),
 			Key:         "lambda",
 			ExpectedMsg: "Hello foobar some!",
 		},
@@ -78,7 +77,7 @@ func TestLocalStack(t *testing.T) {
 			Name:        "post_with_function_name",
 			Method:      "POST",
 			Params:      map[string]string{"function": "unknown"},
-			Body:        ioutil.NopCloser(bytes.NewBufferString(`{"first_name":"foobar","last_name":"some"}`)),
+			Body:        io.NopCloser(bytes.NewBufferString(`{"first_name":"foobar","last_name":"some"}`)),
 			ExpectedMsg: "Hello foobar some!",
 			Function:    "python37",
 		},
@@ -94,7 +93,7 @@ func TestLocalStack(t *testing.T) {
 			Name:        "post_with_function_name_and_key",
 			Method:      "POST",
 			Params:      map[string]string{"function": "unknown", "lambda": "unknown"},
-			Body:        ioutil.NopCloser(bytes.NewBufferString(`{"first_name":"foobar","last_name":"some"}`)),
+			Body:        io.NopCloser(bytes.NewBufferString(`{"first_name":"foobar","last_name":"some"}`)),
 			Key:         "lambda",
 			ExpectedMsg: "Hello foobar some!",
 			Function:    "python37",
