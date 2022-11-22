@@ -1,13 +1,10 @@
 package lambda
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"io"
-	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
@@ -134,11 +131,7 @@ func getOptions(remote *config.Backend) (*Options, error) {
 
 	cfg := &Options{
 		FunctionExtractor: funcExtractor,
-	}
-	if remote.Method == "GET" {
-		cfg.PayloadExtractor = fromParams
-	} else {
-		cfg.PayloadExtractor = fromBody
+		PayloadExtractor:  payloadExtractorFactory(remote.Method, ecfg),
 	}
 
 	region, ok := ecfg["region"].(string)
@@ -170,17 +163,3 @@ type Options struct {
 type functionExtractor func(*proxy.Request) string
 
 type payloadExtractor func(*proxy.Request) ([]byte, error)
-
-func fromParams(r *proxy.Request) ([]byte, error) {
-	buf := new(bytes.Buffer)
-	params := map[string]string{}
-	for k, v := range r.Params {
-		params[strings.ToLower(k)] = v
-	}
-	err := json.NewEncoder(buf).Encode(params)
-	return buf.Bytes(), err
-}
-
-func fromBody(r *proxy.Request) ([]byte, error) {
-	return io.ReadAll(r.Body)
-}
