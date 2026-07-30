@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	Namespace = "github.com/devopsfaith/krakend-lambda"
+	Namespace = "backend/lambda"
 )
 
 var (
