@@ -13,14 +13,14 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
-	"github.com/luraproject/lura/v2/config"
-	"github.com/luraproject/lura/v2/core"
-	"github.com/luraproject/lura/v2/logging"
-	"github.com/luraproject/lura/v2/proxy"
+	"github.com/luraproject/lura/v3/config"
+	"github.com/luraproject/lura/v3/core"
+	"github.com/luraproject/lura/v3/logging"
+	"github.com/luraproject/lura/v3/proxy"
 )
 
 const (
-	Namespace = "github.com/devopsfaith/krakend-lambda"
+	Namespace = "backend/lambda"
 )
 
 var (
