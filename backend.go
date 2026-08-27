@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 
@@ -47,7 +48,9 @@ func invokerFactory(o *Options) Invoker {
 
 func BackendFactoryWithInvoker(logger logging.Logger, bf proxy.BackendFactory, invokerFactory func(*Options) Invoker) proxy.BackendFactory {
 	return func(remote *config.Backend) proxy.Proxy {
-		logPrefix := "[BACKEND: " + remote.URLPattern + "][Lambda]"
+		logPrefix := fmt.Sprintf("[BACKEND: %s %s -> %s %s][Lambda]",
+			remote.ParentEndpointMethod, remote.ParentEndpoint,
+			remote.Method, remote.URLPattern)
 		ecfg, err := getOptions(remote)
 		if err != nil {
 			if err != errNoConfig {
