@@ -7,11 +7,13 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go-v2/service/lambda"
+	"github.com/aws/aws-sdk-go-v2/service/lambda/types"
 	"github.com/luraproject/lura/v3/config"
 	"github.com/luraproject/lura/v3/logging"
 	"github.com/luraproject/lura/v3/proxy"
@@ -80,8 +82,8 @@ func TestBackendFactoryWithInvoker(t *testing.T) {
 		explosiveBF,
 		func(_ *Options) Invoker {
 			return invoker(func(in *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
-				if *in.InvocationType != "RequestResponse" {
-					t.Errorf("unexpected InvocationType: %s", *in.InvocationType)
+				if in.InvocationType != types.InvocationTypeRequestResponse {
+					t.Errorf("unexpected InvocationType: %s", in.InvocationType)
 				}
 				// if *in.ClientContext != clientContext {
 				// 	t.Errorf("unexpected ClientContext: %s", *in.ClientContext)
@@ -102,7 +104,7 @@ func TestBackendFactoryWithInvoker(t *testing.T) {
 				}
 				return &lambda.InvokeOutput{
 					Payload:    []byte(fmt.Sprintf(`{"message":"Hello %s %s!", "foo": 42}`, payload["first_name"], payload["last_name"])),
-					StatusCode: aws.Int64(200),
+					StatusCode: 200,
 				}, nil
 			})
 		},
@@ -227,8 +229,8 @@ func TestBackendFactoryWithInvoker_error(t *testing.T) {
 		explosiveBF,
 		func(_ *Options) Invoker {
 			return invoker(func(in *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
-				if *in.InvocationType != "RequestResponse" {
-					t.Errorf("unexpected InvocationType: %s", *in.InvocationType)
+				if in.InvocationType != types.InvocationTypeRequestResponse {
+					t.Errorf("unexpected InvocationType: %s", in.InvocationType)
 				}
 				// if *in.ClientContext != clientContext {
 				// 	t.Errorf("unexpected ClientContext: %s", *in.ClientContext)
@@ -248,7 +250,7 @@ func TestBackendFactoryWithInvoker_error(t *testing.T) {
 				}
 				return &lambda.InvokeOutput{
 					Payload:    []byte(`{"message":"Hello  !"}`),
-					StatusCode: aws.Int64(200),
+					StatusCode: 200,
 				}, nil
 			})
 		},
@@ -286,8 +288,8 @@ func TestBackendFactoryWithInvoker_incomplete(t *testing.T) {
 		explosiveBF,
 		func(_ *Options) Invoker {
 			return invoker(func(in *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
-				if *in.InvocationType != "RequestResponse" {
-					t.Errorf("unexpected InvocationType: %s", *in.InvocationType)
+				if in.InvocationType != types.InvocationTypeRequestResponse {
+					t.Errorf("unexpected InvocationType: %s", in.InvocationType)
 				}
 				// if *in.ClientContext != clientContext {
 				// 	t.Errorf("unexpected ClientContext: %s", *in.ClientContext)
@@ -308,7 +310,7 @@ func TestBackendFactoryWithInvoker_incomplete(t *testing.T) {
 				}
 				return &lambda.InvokeOutput{
 					Payload:    []byte(`{"message":"Hello  !"}`),
-					StatusCode: aws.Int64(200),
+					StatusCode: 200,
 				}, nil
 			})
 		},
@@ -352,7 +354,7 @@ func TestBackendFactoryWithInvoker_wrongStatusCode(t *testing.T) {
 			return invoker(func(in *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
 				return &lambda.InvokeOutput{
 					Payload:    []byte(``),
-					StatusCode: aws.Int64(404),
+					StatusCode: 404,
 				}, nil
 			})
 		},
@@ -377,6 +379,109 @@ func TestBackendFactoryWithInvoker_wrongStatusCode(t *testing.T) {
 
 type invoker func(*lambda.InvokeInput) (*lambda.InvokeOutput, error)
 
-func (i invoker) InvokeWithContext(_ aws.Context, in *lambda.InvokeInput, _ ...request.Option) (*lambda.InvokeOutput, error) {
+func (i invoker) Invoke(_ context.Context, in *lambda.InvokeInput, _ ...func(*lambda.Options)) (*lambda.InvokeOutput, error) {
 	return i(in)
+}
+
+func TestBackendFactory_sdkClient(t *testing.T) {
+	t.Setenv("AWS_ACCESS_KEY_ID", "test")
+	t.Setenv("AWS_SECRET_ACCESS_KEY", "test")
+	t.Setenv("AWS_CONFIG_FILE", "/dev/null")
+	t.Setenv("AWS_SHARED_CREDENTIALS_FILE", "/dev/null")
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("unexpected method: %s", r.Method)
+		}
+		if r.URL.Path != "/2015-03-31/functions/python37/invocations" {
+			t.Errorf("unexpected path: %s", r.URL.Path)
+		}
+		if h := r.Header.Get("X-Amz-Invocation-Type"); h != "RequestResponse" {
+			t.Errorf("unexpected invocation type: %s", h)
+		}
+		if a := r.Header.Get("Authorization"); !strings.Contains(a, "/us-east-1/lambda/") {
+			t.Errorf("unexpected signature scope: %s", a)
+		}
+		w.Header().Set("X-Amz-Executed-Version", "$LATEST")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"message":"Hello fooo bar!"}`))
+	}))
+	defer srv.Close()
+
+	bf := BackendFactory(logging.NoOp, func(_ *config.Backend) proxy.Proxy {
+		t.Error("this backend factory should not been called")
+		return proxy.NoopProxy
+	})
+
+	remote := &config.Backend{
+		Method: "GET",
+		ExtraConfig: config.ExtraConfig{
+			Namespace: map[string]interface{}{
+				"function_name": "python37",
+				"region":        "us-east-1",
+				"endpoint":      srv.URL,
+			},
+		},
+	}
+	resp, err := bf(remote)(context.Background(), &proxy.Request{
+		Params: map[string]string{"first_name": "fooo", "last_name": "bar"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if m := resp.Data["message"]; m != "Hello fooo bar!" {
+		t.Errorf("unexpected response: %v", resp.Data)
+	}
+	if v := resp.Metadata.Headers["X-Amz-Executed-Version"]; len(v) != 1 || v[0] != "$LATEST" {
+		t.Errorf("unexpected executed version header: %v", v)
+	}
+}
+
+func TestGetOptions_maxRetries(t *testing.T) {
+	for _, tc := range []struct {
+		Name     string
+		Value    interface{}
+		Expected int
+	}{
+		{Name: "json float", Value: float64(3), Expected: 4},
+		{Name: "json zero", Value: float64(0), Expected: 1},
+		{Name: "int", Value: 2, Expected: 3},
+		{Name: "int64", Value: int64(5), Expected: 6},
+		{Name: "json number", Value: json.Number("7"), Expected: 8},
+		{Name: "fractional", Value: 1.5, Expected: 0},
+		{Name: "negative", Value: float64(-1), Expected: 0},
+		{Name: "string", Value: "3", Expected: 0},
+		{Name: "missing", Value: nil, Expected: 0},
+	} {
+		t.Run(tc.Name, func(t *testing.T) {
+			extra := map[string]interface{}{"region": "us-east-1"}
+			if tc.Value != nil {
+				extra["max_retries"] = tc.Value
+			}
+			opts, err := getOptions(&config.Backend{
+				Method:      "GET",
+				ExtraConfig: config.ExtraConfig{Namespace: extra},
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if opts.Config.RetryMaxAttempts != tc.Expected {
+				t.Errorf("unexpected RetryMaxAttempts: got %d, want %d", opts.Config.RetryMaxAttempts, tc.Expected)
+			}
+		})
+	}
+}
+
+func TestGetOptions_maxRetriesFromJSON(t *testing.T) {
+	cfg := config.ExtraConfig{}
+	if err := json.Unmarshal([]byte(`{"backend/lambda":{"region":"us-east-1","max_retries":2}}`), &cfg); err != nil {
+		t.Fatal(err)
+	}
+	opts, err := getOptions(&config.Backend{Method: "GET", ExtraConfig: cfg})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if opts.Config.RetryMaxAttempts != 3 {
+		t.Errorf("unexpected RetryMaxAttempts: %d", opts.Config.RetryMaxAttempts)
+	}
 }

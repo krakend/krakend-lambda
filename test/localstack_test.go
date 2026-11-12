@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	krakendlambda "github.com/krakend/krakend-lambda/v3"
+	krakendlambda "github.com/krakend/krakend-lambda/v4"
 	"github.com/luraproject/lura/v3/config"
 	"github.com/luraproject/lura/v3/logging"
 	"github.com/luraproject/lura/v3/proxy"
