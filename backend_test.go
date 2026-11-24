@@ -343,7 +343,7 @@ func TestBackendFactoryWithInvoker_incomplete(t *testing.T) {
 }
 
 func TestBackendFactoryWithInvoker_wrongStatusCode(t *testing.T) {
-	explosiveBF := func(remote *config.Backend) proxy.Proxy {
+	explosiveBF := func(_ *config.Backend) proxy.Proxy {
 		t.Error("this backend factory should not been called")
 		return proxy.NoopProxy
 	}
