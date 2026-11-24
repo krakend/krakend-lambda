@@ -46,12 +46,12 @@ func TestBackendFactoryWithInvoker_fallback(t *testing.T) {
 
 			bf := BackendFactoryWithInvoker(
 				logging.NoOp,
-				func(remote *config.Backend) proxy.Proxy {
+				func(_ *config.Backend) proxy.Proxy {
 					hits++
 					return proxy.NoopProxy
 				},
 				func(_ *Options) Invoker {
-					return invoker(func(in *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
+					return invoker(func(_ *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
 						t.Error("this invoker should not been called")
 						return nil, nil
 					})
@@ -73,7 +73,7 @@ func TestBackendFactoryWithInvoker_fallback(t *testing.T) {
 }
 
 func TestBackendFactoryWithInvoker(t *testing.T) {
-	explosiveBF := func(remote *config.Backend) proxy.Proxy {
+	explosiveBF := func(_ *config.Backend) proxy.Proxy {
 		t.Error("this backend factory should not been called")
 		return proxy.NoopProxy
 	}
@@ -220,7 +220,7 @@ func TestBackendFactoryWithInvoker(t *testing.T) {
 }
 
 func TestBackendFactoryWithInvoker_error(t *testing.T) {
-	explosiveBF := func(remote *config.Backend) proxy.Proxy {
+	explosiveBF := func(_ *config.Backend) proxy.Proxy {
 		t.Error("this backend factory should not been called")
 		return proxy.NoopProxy
 	}
@@ -279,7 +279,7 @@ func TestBackendFactoryWithInvoker_error(t *testing.T) {
 }
 
 func TestBackendFactoryWithInvoker_incomplete(t *testing.T) {
-	explosiveBF := func(remote *config.Backend) proxy.Proxy {
+	explosiveBF := func(_ *config.Backend) proxy.Proxy {
 		t.Error("this backend factory should not been called")
 		return proxy.NoopProxy
 	}
@@ -352,7 +352,7 @@ func TestBackendFactoryWithInvoker_wrongStatusCode(t *testing.T) {
 		logging.NoOp,
 		explosiveBF,
 		func(_ *Options) Invoker {
-			return invoker(func(in *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
+			return invoker(func(_ *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
 				return &lambda.InvokeOutput{
 					Payload:    []byte(``),
 					StatusCode: 404,

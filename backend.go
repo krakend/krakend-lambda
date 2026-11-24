@@ -25,7 +25,6 @@ package lambda
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"io"
@@ -36,7 +35,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
 	"github.com/aws/aws-sdk-go-v2/service/lambda/types"
 	"github.com/luraproject/lura/v2/config"
-	"github.com/luraproject/lura/v2/core"
 	"github.com/luraproject/lura/v2/logging"
 	"github.com/luraproject/lura/v2/proxy"
 )
@@ -51,7 +49,6 @@ var (
 	errBadStatusCode = errors.New("aws lambda: bad status code")
 	errNoConfig      = errors.New("aws lambda: no extra config defined")
 	errBadConfig     = errors.New("aws lambda: unable to parse the defined extra config")
-	clientContext    = base64.StdEncoding.EncodeToString([]byte(`{"client":"KrakenD", "version":"` + core.KrakendVersion + `"}`))
 )
 
 // Invoker invokes AWS Lambda functions. It is satisfied by *lambda.Client from
@@ -143,7 +140,6 @@ func BackendFactoryWithInvoker(logger logging.Logger, bf proxy.BackendFactory, i
 				return nil, err
 			}
 			input := &lambda.InvokeInput{
-				// ClientContext:  aws.String(clientContext),
 				FunctionName:   aws.String(ecfg.FunctionExtractor(r)),
 				InvocationType: types.InvocationTypeRequestResponse,
 				LogType:        types.LogTypeNone,
